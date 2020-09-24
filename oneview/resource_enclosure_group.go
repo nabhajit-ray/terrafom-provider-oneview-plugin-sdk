@@ -139,7 +139,7 @@ func resourceEnclosureGroup() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"Status": {
+			"status": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},

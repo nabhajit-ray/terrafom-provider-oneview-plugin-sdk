@@ -76,7 +76,7 @@ func dataSourceFCoENetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"scopesUri": {
+			"scopesuri": {
 				Computed: true,
 				Type:     schema.TypeString,
 			},
@@ -108,6 +108,6 @@ func dataSourceFCoENetworkRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("created", fcoeNet.Created)
 	d.Set("modified", fcoeNet.Modified)
 	d.Set("etag", fcoeNet.ETAG)
-	d.Set("scopesUri", fcoeNet.ScopesUri.String())
+	d.Set("scopesuri", fcoeNet.ScopesUri.String())
 	return nil
 }

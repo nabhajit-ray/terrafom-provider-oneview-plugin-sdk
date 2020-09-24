@@ -408,7 +408,7 @@ func resourceServerProfile() *schema.Resource {
 										Type:     schema.TypeBool,
 										Optional: true,
 									},
-									"templateUri": {
+									"templateuri": {
 										Type:     schema.TypeString,
 										Optional: true,
 									},

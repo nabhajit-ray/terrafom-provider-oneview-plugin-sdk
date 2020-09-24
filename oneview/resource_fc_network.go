@@ -81,7 +81,7 @@ func resourceFCNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"eTag": {
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -93,7 +93,7 @@ func resourceFCNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"scopesUri": {
+			"scopesuri": {
 				Optional: true,
 				Type:     schema.TypeString,
 				Computed: true,
@@ -163,8 +163,8 @@ func resourceFCNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("fabric_uri", fcNet.FabricUri.String())
 	d.Set("created", fcNet.Created)
 	d.Set("modified", fcNet.Modified)
-	d.Set("eTag", fcNet.ETAG)
-	d.Set("scopesUri", fcNet.ScopesUri.String())
+	d.Set("etag", fcNet.ETAG)
+	d.Set("scopeuri", fcNet.ScopesUri.String())
 	d.Set("initial_scope_uris", fcNet.InitialScopeUris)
 	return nil
 }
@@ -173,7 +173,7 @@ func resourceFCNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
 	fcNet := ov.FCNetwork{
-		ETAG:                    d.Get("eTag").(string),
+		ETAG:                    d.Get("etag").(string),
 		URI:                     utils.NewNstring(d.Get("uri").(string)),
 		Name:                    d.Get("name").(string),
 		FabricType:              d.Get("fabric_type").(string),

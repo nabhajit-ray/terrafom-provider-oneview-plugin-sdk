@@ -82,7 +82,7 @@ func resourceUplinkSet() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"eTag": {
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -266,7 +266,7 @@ func resourceUplinkSetRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("fc_network_uris", uplinkSet.FcNetworkURIs)
 	d.Set("created", uplinkSet.Created)
 	d.Set("modified", uplinkSet.Modified)
-	d.Set("eTag", uplinkSet.Etag)
+	d.Set("etag", uplinkSet.Etag)
 	d.Set("reachability", uplinkSet.Reachability)
 	d.Set("network_type", uplinkSet.NetworkType)
 	d.Set("ethernet_network_type", uplinkSet.EthernetNetworkType)

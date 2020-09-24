@@ -131,7 +131,7 @@ func dataSourceEnclosureGroup() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"Status": {
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},

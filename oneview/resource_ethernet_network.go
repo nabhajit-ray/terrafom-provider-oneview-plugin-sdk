@@ -98,11 +98,11 @@ func resourceEthernetNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"eTag": {
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"scopesUri": {
+			"scopesuri": {
 				Optional: true,
 				Type:     schema.TypeString,
 				Computed: true,
@@ -173,8 +173,8 @@ func resourceEthernetNetworkRead(d *schema.ResourceData, meta interface{}) error
 	d.Set("category", eNet.Category)
 	d.Set("state", eNet.State)
 	d.Set("fabric_uri", eNet.FabricUri.String())
-	d.Set("eTag", eNet.ETAG)
-	d.Set("scopesUri", eNet.ScopesUri.String())
+	d.Set("etag", eNet.ETAG)
+	d.Set("scopesuri", eNet.ScopesUri.String())
 	d.Set("initial_scope_uris", eNet.InitialScopeUris)
 
 	return nil
@@ -184,7 +184,7 @@ func resourceEthernetNetworkUpdate(d *schema.ResourceData, meta interface{}) err
 	config := meta.(*Config)
 
 	newENet := ov.EthernetNetwork{
-		ETAG:                  d.Get("eTag").(string),
+		ETAG:                  d.Get("etag").(string),
 		URI:                   utils.NewNstring(d.Get("uri").(string)),
 		VlanId:                d.Get("vlan_id").(int),
 		Purpose:               d.Get("purpose").(string),

@@ -684,7 +684,7 @@ func resourceLogicalInterconnectGroup() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"eTag": {
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -1317,7 +1317,7 @@ func resourceLogicalInterconnectGroupRead(d *schema.ResourceData, meta interface
 	d.Set("category", logicalInterconnectGroup.Category)
 	d.Set("state", logicalInterconnectGroup.State)
 	d.Set("fabric_uri", logicalInterconnectGroup.FabricUri.String())
-	d.Set("eTag", logicalInterconnectGroup.ETAG)
+	d.Set("etag", logicalInterconnectGroup.ETAG)
 	d.Set("description", logicalInterconnectGroup.Description)
 	d.Set("interconnect_settings.0.interconnect_utilization_alert", logicalInterconnectGroup.EthernetSettings.EnableInterconnectUtilizationAlert)
 	d.Set("interconnect_bay_set", logicalInterconnectGroup.InterconnectBaySet)

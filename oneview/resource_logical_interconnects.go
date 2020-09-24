@@ -19,6 +19,7 @@ func resourceLogicalInterconnect() *schema.Resource {
 	return &schema.Resource{
 		Read:   resourceLogicalInterconnectRead,
 		Update: resourceLogicalInterconnectUpdate,
+		Delete: resourceLogicalInterconnectDelete,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -389,4 +390,7 @@ func resourceLogicalInterconnectUpdate(d *schema.ResourceData, meta interface{})
 	}
 
 	return resourceLogicalInterconnectRead(d, meta)
+}
+func resourceLogicalInterconnectDelete(d *schema.ResourceData, meta interface{}) error {
+	return nil
 }
