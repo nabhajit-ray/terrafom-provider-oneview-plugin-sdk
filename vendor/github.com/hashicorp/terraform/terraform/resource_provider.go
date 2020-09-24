@@ -1,26 +1,30 @@
 package terraform
 
-// ResourceProvider is an interface that must be implemented by any
-// resource provider: the thing that creates and manages the resources in
-// a Terraform configuration.
+// ResourceProvider is a legacy interface for providers.
 //
-// Important implementation note: All returned pointers, such as
-// *ResourceConfig, *InstanceState, *InstanceDiff, etc. must not point to
-// shared data. Terraform is highly parallel and assumes that this data is safe
-// to read/write in parallel so it must be unique references. Note that it is
-// safe to return arguments as results, however.
+// This is retained only for compatibility with legacy code. The current
+// interface for providers is providers.Interface, in the sibling directory
+// named "providers".
 type ResourceProvider interface {
 	/*********************************************************************
 	* Functions related to the provider
 	*********************************************************************/
 
-	// Input is called to ask the provider to ask the user for input
-	// for completing the configuration if necesarry.
+	// ProviderSchema returns the config schema for the main provider
+	// configuration, as would appear in a "provider" block in the
+	// configuration files.
 	//
-	// This may or may not be called, so resource provider writers shouldn't
-	// rely on this being available to set some default values for validate
-	// later. Example of a situation where this wouldn't be called is if
-	// the user is not using a TTY.
+	// Currently not all providers support schema. Callers must therefore
+	// first call Resources and DataSources and ensure that at least one
+	// resource or data source has the SchemaAvailable flag set.
+	GetSchema(*ProviderSchemaRequest) (*ProviderSchema, error)
+
+	// Input was used prior to v0.12 to ask the provider to prompt the user
+	// for input to complete the configuration.
+	//
+	// From v0.12 onwards this method is never called because Terraform Core
+	// is able to handle the necessary input logic itself based on the
+	// schema returned from GetSchema.
 	Input(UIInput, *ResourceConfig) (*ResourceConfig, error)
 
 	// Validate is called once at the beginning with the raw configuration
@@ -164,11 +168,25 @@ type ResourceProviderCloser interface {
 type ResourceType struct {
 	Name       string // Name of the resource, example "instance" (no provider prefix)
 	Importable bool   // Whether this resource supports importing
+
+	// SchemaAvailable is set if the provider supports the ProviderSchema,
+	// ResourceTypeSchema and DataSourceSchema methods. Although it is
+	// included on each resource type, it's actually a provider-wide setting
+	// that's smuggled here only because that avoids a breaking change to
+	// the plugin protocol.
+	SchemaAvailable bool
 }
 
 // DataSource is a data source that a resource provider implements.
 type DataSource struct {
 	Name string
+
+	// SchemaAvailable is set if the provider supports the ProviderSchema,
+	// ResourceTypeSchema and DataSourceSchema methods. Although it is
+	// included on each resource type, it's actually a provider-wide setting
+	// that's smuggled here only because that avoids a breaking change to
+	// the plugin protocol.
+	SchemaAvailable bool
 }
 
 // ResourceProviderFactory is a function type that creates a new instance
@@ -202,3 +220,17 @@ func ProviderHasDataSource(p ResourceProvider, n string) bool {
 
 	return false
 }
+
+const errPluginInit = `
+Plugin reinitialization required. Please run "terraform init".
+
+Plugins are external binaries that Terraform uses to access and manipulate
+resources. The configuration provided requires plugins which can't be located,
+don't satisfy the version constraints, or are otherwise incompatible.
+
+Terraform automatically discovers provider requirements from your
+configuration, including providers used in child modules. To see the
+requirements and constraints, run "terraform providers".
+
+%s
+`

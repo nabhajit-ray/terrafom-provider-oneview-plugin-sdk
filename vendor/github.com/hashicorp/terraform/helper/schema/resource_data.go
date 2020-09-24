@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/gocty"
 )
 
 // ResourceData is used to query and set the attributes of a resource.
@@ -20,12 +22,13 @@ import (
 // The most relevant methods to take a look at are Get, Set, and Partial.
 type ResourceData struct {
 	// Settable (internally)
-	schema   map[string]*Schema
-	config   *terraform.ResourceConfig
-	state    *terraform.InstanceState
-	diff     *terraform.InstanceDiff
-	meta     map[string]interface{}
-	timeouts *ResourceTimeout
+	schema       map[string]*Schema
+	config       *terraform.ResourceConfig
+	state        *terraform.InstanceState
+	diff         *terraform.InstanceDiff
+	meta         map[string]interface{}
+	timeouts     *ResourceTimeout
+	providerMeta cty.Value
 
 	// Don't set
 	multiReader *MultiLevelFieldReader
@@ -35,6 +38,8 @@ type ResourceData struct {
 	partialMap  map[string]struct{}
 	once        sync.Once
 	isNew       bool
+
+	panicOnError bool
 }
 
 // getResult is the internal structure that is generated when a Get
@@ -50,6 +55,8 @@ type getResult struct {
 // UnsafeSetFieldRaw allows setting arbitrary values in state to arbitrary
 // values, bypassing schema. This MUST NOT be used in normal circumstances -
 // it exists only to support the remote_state data source.
+//
+// Deprecated: Fully define schema attributes and use Set() instead.
 func (d *ResourceData) UnsafeSetFieldRaw(key string, value string) {
 	d.once.Do(d.init)
 
@@ -101,6 +108,22 @@ func (d *ResourceData) GetOk(key string) (interface{}, bool) {
 		}
 	}
 
+	return r.Value, exists
+}
+
+// GetOkExists returns the data for a given key and whether or not the key
+// has been set to a non-zero value. This is only useful for determining
+// if boolean attributes have been set, if they are Optional but do not
+// have a Default value.
+//
+// This is nearly the same function as GetOk, yet it does not check
+// for the zero value of the attribute's type. This allows for attributes
+// without a default, to fully check for a literal assignment, regardless
+// of the zero-value for that type.
+// This should only be used if absolutely required/needed.
+func (d *ResourceData) GetOkExists(key string) (interface{}, bool) {
+	r := d.getRaw(key, getSourceSet)
+	exists := r.Exists && !r.Computed
 	return r.Value, exists
 }
 
@@ -168,7 +191,11 @@ func (d *ResourceData) Set(key string, value interface{}) error {
 		}
 	}
 
-	return d.setWriter.WriteField(strings.Split(key, "."), value)
+	err := d.setWriter.WriteField(strings.Split(key, "."), value)
+	if err != nil && d.panicOnError {
+		panic(err)
+	}
+	return err
 }
 
 // SetPartial adds the key to the final state output while
@@ -197,10 +224,16 @@ func (d *ResourceData) Id() string {
 
 	if d.state != nil {
 		result = d.state.ID
+		if result == "" {
+			result = d.state.Attributes["id"]
+		}
 	}
 
 	if d.newState != nil {
 		result = d.newState.ID
+		if result == "" {
+			result = d.newState.Attributes["id"]
+		}
 	}
 
 	return result
@@ -224,6 +257,18 @@ func (d *ResourceData) ConnInfo() map[string]string {
 func (d *ResourceData) SetId(v string) {
 	d.once.Do(d.init)
 	d.newState.ID = v
+
+	// once we transition away from the legacy state types, "id" will no longer
+	// be a special field, and will become a normal attribute.
+	// set the attribute normally
+	d.setWriter.unsafeWriteField("id", v)
+
+	// Make sure the newState is also set, otherwise the old value
+	// may get precedence.
+	if d.newState.Attributes == nil {
+		d.newState.Attributes = map[string]string{}
+	}
+	d.newState.Attributes["id"] = v
 }
 
 // SetConnInfo sets the connection info for a resource.
@@ -293,6 +338,7 @@ func (d *ResourceData) State() *terraform.InstanceState {
 
 	mapW := &MapFieldWriter{Schema: d.schema}
 	if err := mapW.WriteField(nil, rawMap); err != nil {
+		log.Printf("[ERR] Error writing fields: %s", err)
 		return nil
 	}
 
@@ -344,6 +390,13 @@ func (d *ResourceData) State() *terraform.InstanceState {
 func (d *ResourceData) Timeout(key string) time.Duration {
 	key = strings.ToLower(key)
 
+	// System default of 20 minutes
+	defaultTimeout := 20 * time.Minute
+
+	if d.timeouts == nil {
+		return defaultTimeout
+	}
+
 	var timeout *time.Duration
 	switch key {
 	case TimeoutCreate:
@@ -364,8 +417,7 @@ func (d *ResourceData) Timeout(key string) time.Duration {
 		return *d.timeouts.Default
 	}
 
-	// Return system default of 20 minutes
-	return 20 * time.Minute
+	return defaultTimeout
 }
 
 func (d *ResourceData) init() {
@@ -423,7 +475,7 @@ func (d *ResourceData) init() {
 }
 
 func (d *ResourceData) diffChange(
-	k string) (interface{}, interface{}, bool, bool) {
+	k string) (interface{}, interface{}, bool, bool, bool) {
 	// Get the change between the state and the config.
 	o, n := d.getChange(k, getSourceState, getSourceConfig|getSourceExact)
 	if !o.Exists {
@@ -434,7 +486,7 @@ func (d *ResourceData) diffChange(
 	}
 
 	// Return the old, new, and whether there is a change
-	return o.Value, n.Value, !reflect.DeepEqual(o.Value, n.Value), n.Computed
+	return o.Value, n.Value, !reflect.DeepEqual(o.Value, n.Value), n.Computed, false
 }
 
 func (d *ResourceData) getChange(
@@ -499,4 +551,11 @@ func (d *ResourceData) get(addr []string, source getSource) getResult {
 		Exists:         result.Exists,
 		Schema:         schema,
 	}
+}
+
+func (d *ResourceData) GetProviderMeta(dst interface{}) error {
+	if d.providerMeta.IsNull() {
+		return nil
+	}
+	return gocty.FromCtyValue(d.providerMeta, &dst)
 }

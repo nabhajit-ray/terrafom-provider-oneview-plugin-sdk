@@ -1,9 +1,10 @@
 package terraform
 
 import (
-	"fmt"
+	"github.com/hashicorp/terraform/addrs"
+	"github.com/hashicorp/terraform/configs"
+	"github.com/hashicorp/terraform/configs/configschema"
 
-	"github.com/hashicorp/terraform/config"
 	"github.com/hashicorp/terraform/dag"
 )
 
@@ -14,63 +15,72 @@ type ConcreteProviderNodeFunc func(*NodeAbstractProvider) dag.Vertex
 // NodeAbstractProvider represents a provider that has no associated operations.
 // It registers all the common interfaces across operations for providers.
 type NodeAbstractProvider struct {
-	NameValue string
-	PathValue []string
+	Addr addrs.AbsProviderConfig
 
 	// The fields below will be automatically set using the Attach
 	// interfaces if you're running those transforms, but also be explicitly
 	// set if you already have that information.
 
-	Config *config.ProviderConfig
+	Config *configs.Provider
+	Schema *configschema.Block
 }
+
+var (
+	_ GraphNodeModulePath                 = (*NodeAbstractProvider)(nil)
+	_ GraphNodeReferencer                 = (*NodeAbstractProvider)(nil)
+	_ GraphNodeProvider                   = (*NodeAbstractProvider)(nil)
+	_ GraphNodeAttachProvider             = (*NodeAbstractProvider)(nil)
+	_ GraphNodeAttachProviderConfigSchema = (*NodeAbstractProvider)(nil)
+	_ dag.GraphNodeDotter                 = (*NodeAbstractProvider)(nil)
+)
 
 func (n *NodeAbstractProvider) Name() string {
-	result := fmt.Sprintf("provider.%s", n.NameValue)
-	if len(n.PathValue) > 1 {
-		result = fmt.Sprintf("%s.%s", modulePrefixStr(n.PathValue), result)
-	}
-
-	return result
+	return n.Addr.String()
 }
 
-// GraphNodeSubPath
-func (n *NodeAbstractProvider) Path() []string {
-	return n.PathValue
+// GraphNodeModuleInstance
+func (n *NodeAbstractProvider) Path() addrs.ModuleInstance {
+	// Providers cannot be contained inside an expanded module, so this shim
+	// converts our module path to the correct ModuleInstance.
+	return n.Addr.Module.UnkeyedInstanceShim()
 }
 
-// RemovableIfNotTargeted
-func (n *NodeAbstractProvider) RemoveIfNotTargeted() bool {
-	// We need to add this so that this node will be removed if
-	// it isn't targeted or a dependency of a target.
-	return true
+// GraphNodeModulePath
+func (n *NodeAbstractProvider) ModulePath() addrs.Module {
+	return n.Addr.Module
 }
 
 // GraphNodeReferencer
-func (n *NodeAbstractProvider) References() []string {
+func (n *NodeAbstractProvider) References() []*addrs.Reference {
+	if n.Config == nil || n.Schema == nil {
+		return nil
+	}
+
+	return ReferencesFromConfig(n.Config.Config, n.Schema)
+}
+
+// GraphNodeProvider
+func (n *NodeAbstractProvider) ProviderAddr() addrs.AbsProviderConfig {
+	return n.Addr
+}
+
+// GraphNodeProvider
+func (n *NodeAbstractProvider) ProviderConfig() *configs.Provider {
 	if n.Config == nil {
 		return nil
 	}
 
-	return ReferencesFromConfig(n.Config.RawConfig)
-}
-
-// GraphNodeProvider
-func (n *NodeAbstractProvider) ProviderName() string {
-	return n.NameValue
-}
-
-// GraphNodeProvider
-func (n *NodeAbstractProvider) ProviderConfig() *config.RawConfig {
-	if n.Config == nil {
-		return nil
-	}
-
-	return n.Config.RawConfig
+	return n.Config
 }
 
 // GraphNodeAttachProvider
-func (n *NodeAbstractProvider) AttachProvider(c *config.ProviderConfig) {
+func (n *NodeAbstractProvider) AttachProvider(c *configs.Provider) {
 	n.Config = c
+}
+
+// GraphNodeAttachProviderConfigSchema impl.
+func (n *NodeAbstractProvider) AttachProviderConfigSchema(schema *configschema.Block) {
+	n.Schema = schema
 }
 
 // GraphNodeDotter impl.
