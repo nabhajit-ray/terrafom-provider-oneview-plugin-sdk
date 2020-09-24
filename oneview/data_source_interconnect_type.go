@@ -141,7 +141,7 @@ func dataSourceInterconnectType() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"eTag": {
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -168,7 +168,7 @@ func dataSourceInterconnectTypeRead(d *schema.ResourceData, meta interface{}) er
 	d.Set("category", interconnectType.Category)
 	d.Set("state", interconnectType.State)
 	d.Set("port_info", interconnectType.PortInfos)
-	d.Set("eTag", interconnectType.ETAG)
+	d.Set("etag", interconnectType.ETAG)
 	d.Set("description", interconnectType.Description)
 
 	DownlinkPortCapability := make([]map[string]interface{}, 0, 1)

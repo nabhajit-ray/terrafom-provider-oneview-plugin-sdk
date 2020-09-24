@@ -631,7 +631,7 @@ func dataSourceLogicalInterconnectGroup() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"eTag": {
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -659,7 +659,7 @@ func dataSourceLogicalInterconnectGroupRead(d *schema.ResourceData, meta interfa
 	d.Set("category", logicalInterconnectGroup.Category)
 	d.Set("state", logicalInterconnectGroup.State)
 	d.Set("fabric_uri", logicalInterconnectGroup.FabricUri.String())
-	d.Set("eTag", logicalInterconnectGroup.ETAG)
+	d.Set("etag", logicalInterconnectGroup.ETAG)
 	d.Set("description", logicalInterconnectGroup.Description)
 	d.Set("interconnect_bay_set", logicalInterconnectGroup.InterconnectBaySet)
 	d.Set("redundancy_type", logicalInterconnectGroup.RedundancyType)

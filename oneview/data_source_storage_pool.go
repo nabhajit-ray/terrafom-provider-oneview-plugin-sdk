@@ -40,7 +40,7 @@ func dataSourceStoragePool() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"eTag": {
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -124,7 +124,7 @@ func dataSourceStoragePoolRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(d.Get("name").(string))
 	d.Set("category", storagePool.Category)
-	d.Set("eTag", storagePool.ETAG)
+	d.Set("etag", storagePool.ETAG)
 	d.Set("name", storagePool.Name)
 	d.Set("description", storagePool.Description.String())
 	d.Set("state", storagePool.State)

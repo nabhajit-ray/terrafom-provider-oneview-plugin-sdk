@@ -160,7 +160,7 @@ func dataSourceEnclosureGroupRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("associated_logical_interconnect_groups", enclosureGroup.AssociatedLogicalInterconnectGroups)
 	d.Set("category", enclosureGroup.Category)
 	d.Set("description", enclosureGroup.Description)
-	d.Set("eTag", enclosureGroup.ETAG)
+	d.Set("etag", enclosureGroup.ETAG)
 	d.Set("enclosure_count", enclosureGroup.EnclosureCount)
 	d.Set("enclosure_type_uri", enclosureGroup.EnclosureTypeUri.String())
 	d.Set("initial_scope_uris", enclosureGroup.InitialScopeUris)
