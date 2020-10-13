@@ -14,7 +14,7 @@ package oneview
 import (
 	"github.com/HewlettPackard/oneview-golang/ov"
 	"github.com/HewlettPackard/oneview-golang/utils"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceFCoENetwork() *schema.Resource {
@@ -158,12 +158,12 @@ func resourceFCoENetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
 	newFCoENet := ov.FCoENetwork{
-		ETAG:   d.Get("etag").(string),
-		URI:    utils.NewNstring(d.Get("uri").(string)),
-		VlanId: d.Get("vlanid").(int),
-		Name:   d.Get("name").(string),
+		ETAG:                  d.Get("etag").(string),
+		URI:                   utils.NewNstring(d.Get("uri").(string)),
+		VlanId:                d.Get("vlanid").(int),
+		Name:                  d.Get("name").(string),
 		ConnectionTemplateUri: utils.NewNstring(d.Get("connectiontemplateuri").(string)),
-		Type: d.Get("type").(string),
+		Type:                  d.Get("type").(string),
 	}
 
 	err := config.ovClient.UpdateFCoENetwork(newFCoENet)

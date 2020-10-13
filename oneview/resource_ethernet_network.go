@@ -14,7 +14,7 @@ package oneview
 import (
 	"github.com/HewlettPackard/oneview-golang/ov"
 	"github.com/HewlettPackard/oneview-golang/utils"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceEthernetNetwork() *schema.Resource {
@@ -192,7 +192,7 @@ func resourceEthernetNetworkUpdate(d *schema.ResourceData, meta interface{}) err
 		PrivateNetwork:        d.Get("private_network").(bool),
 		SmartLink:             d.Get("smart_link").(bool),
 		ConnectionTemplateUri: utils.NewNstring(d.Get("connection_template_uri").(string)),
-		Type: d.Get("type").(string),
+		Type:                  d.Get("type").(string),
 	}
 
 	err := config.ovClient.UpdateEthernetNetwork(newENet)
